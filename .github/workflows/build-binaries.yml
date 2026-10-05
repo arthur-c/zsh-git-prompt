@@ -1,4 +1,4 @@
-name: Build ARM64 binaries
+name: Build Haskell binaries
 
 on:
   push:
@@ -73,10 +73,40 @@ jobs:
           path: release/*
           if-no-files-found: error
 
+  build-linux-amd64:
+    name: Build on Linux x86_64
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up GHC and Stack
+        uses: haskell-actions/setup@v2
+        with:
+          ghc-version: "9.14.1"
+          enable-stack: true
+          stack-version: latest
+
+      - name: Build gitstatus
+        run: stack --local-bin-path dist install git-prompt:exe:gitstatus
+
+      - name: Package and verify x86_64 binary
+        run: |
+          readelf -h dist/gitstatus | grep -Eq 'Machine: +Advanced Micro Devices X86-64'
+          mkdir -p release
+          tar -C dist -czf release/gitstatus-linux-amd64.tar.gz gitstatus
+          sha256sum release/gitstatus-linux-amd64.tar.gz > release/gitstatus-linux-amd64.tar.gz.sha256
+
+      - name: Upload Linux x86_64 artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: gitstatus-linux-amd64
+          path: release/*
+          if-no-files-found: error
+
   publish-release:
     name: Attach binary to GitHub Release
     if: github.event_name == 'release' && github.event.action == 'published'
-    needs: [build-linux-arm64, build-macos-arm64]
+    needs: [build-linux-arm64, build-macos-arm64, build-linux-amd64]
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -90,6 +120,11 @@ jobs:
         with:
           name: gitstatus-macos-aarch64
           path: release/macos
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: gitstatus-linux-amd64
+          path: release/linux-x86_64
 
       - name: Upload release assets
         env:
