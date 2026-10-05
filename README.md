@@ -81,6 +81,10 @@ There is now a Haskell implementation as well, which can be four to six times fa
 4.  Define the variable `GIT_PROMPT_EXECUTABLE="haskell"` somewhere in
     your `.zshrc`
 
+On Linux ARM64, prebuilt `gitstatus` binaries are attached to GitHub releases
+as `gitstatus-linux-aarch64.tar.gz`. Extract `gitstatus` to `src/.bin/gitstatus`
+and set `GIT_PROMPT_EXECUTABLE="haskell"` in your `.zshrc`.
+
 ## Customisation
 
 - You may redefine the function `git_super_status` (after the `source` statement) to adapt it to your needs (to change the order in which the information is displayed).
