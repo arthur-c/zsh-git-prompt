@@ -81,6 +81,13 @@ There is now a Haskell implementation as well, which can be four to six times fa
 4.  Define the variable `GIT_PROMPT_EXECUTABLE="haskell"` somewhere in
     your `.zshrc`
 
+Prebuilt Linux amd64, Linux ARM64, and macOS ARM64 `gitstatus` binaries are
+attached to GitHub releases as `gitstatus-linux-amd64.tar.gz`,
+`gitstatus-linux-aarch64.tar.gz`, and `gitstatus-macos-aarch64.tar.gz`. Extract
+`gitstatus` to `src/.bin/gitstatus` and set `GIT_PROMPT_EXECUTABLE="haskell"`
+in your `.zshrc`. The macOS binary requires Homebrew GMP at
+`/opt/homebrew/opt/gmp/lib/libgmp.10.dylib`.
+
 ## Customisation
 
 - You may redefine the function `git_super_status` (after the `source` statement) to adapt it to your needs (to change the order in which the information is displayed).
