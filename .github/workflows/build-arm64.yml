@@ -1,4 +1,4 @@
-name: Build Linux ARM64 binary
+name: Build ARM64 binaries
 
 on:
   push:
@@ -13,7 +13,7 @@ permissions:
   contents: read
 
 jobs:
-  build:
+  build-linux-arm64:
     name: Build on Linux ARM64
     runs-on: ubuntu-24.04-arm
     steps:
@@ -36,27 +36,62 @@ jobs:
           tar -C dist -czf release/gitstatus-linux-aarch64.tar.gz gitstatus
           sha256sum release/gitstatus-linux-aarch64.tar.gz > release/gitstatus-linux-aarch64.tar.gz.sha256
 
-      - name: Upload workflow artifact
+      - name: Upload Linux ARM64 artifact
         uses: actions/upload-artifact@v4
         with:
           name: gitstatus-linux-aarch64
           path: release/*
           if-no-files-found: error
 
+  build-macos-arm64:
+    name: Build on macOS ARM64
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up GHC and Stack
+        uses: haskell-actions/setup@v2
+        with:
+          ghc-version: "9.14.1"
+          enable-stack: true
+          stack-version: latest
+
+      - name: Build gitstatus
+        run: stack --local-bin-path dist install git-prompt:exe:gitstatus
+
+      - name: Package and verify ARM64 binary
+        run: |
+          file dist/gitstatus | grep -q 'Mach-O 64-bit executable arm64'
+          mkdir -p release
+          tar -C dist -czf release/gitstatus-macos-aarch64.tar.gz gitstatus
+          shasum -a 256 release/gitstatus-macos-aarch64.tar.gz > release/gitstatus-macos-aarch64.tar.gz.sha256
+
+      - name: Upload macOS ARM64 artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: gitstatus-macos-aarch64
+          path: release/*
+          if-no-files-found: error
+
   publish-release:
     name: Attach binary to GitHub Release
     if: github.event_name == 'release' && github.event.action == 'published'
-    needs: build
-    runs-on: ubuntu-24.04-arm
+    needs: [build-linux-arm64, build-macos-arm64]
+    runs-on: ubuntu-latest
     permissions:
       contents: write
     steps:
       - uses: actions/download-artifact@v4
         with:
           name: gitstatus-linux-aarch64
-          path: release
+          path: release/linux
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: gitstatus-macos-aarch64
+          path: release/macos
 
       - name: Upload release assets
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release upload "$GITHUB_REF_NAME" release/* --clobber
+        run: gh release upload "$GITHUB_REF_NAME" release/*/* --clobber
